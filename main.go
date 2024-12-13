@@ -2,13 +2,21 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/evg4b/donkey/internal/donkey"
-	"os"
+	"github.com/evg4b/donkey/internal/store"
 )
 
 func main() {
-	if _, err := tea.NewProgram(donkey.InitialModel()).Run(); err != nil {
+	store, err := store.NewStore()
+	if err != nil {
+		fmt.Println("Error creating stire:", err)
+		os.Exit(1)
+	}
+
+	if _, err := tea.NewProgram(donkey.InitialModel(store)).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}
