@@ -5,12 +5,24 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/evg4b/donkey/internal/config"
 	"github.com/evg4b/donkey/internal/donkey"
 	"github.com/evg4b/donkey/internal/store"
 )
 
 func main() {
-	store, err := store.NewStore()
+	config, err := config.LoadConfig()
+	if err != nil {
+		fmt.Println("Error creating stire:", err)
+		os.Exit(1)
+	}
+
+	store, err := store.NewStore(
+		config.DefaultProvider,
+		config.DefaultModel,
+		config.Timeout,
+	)
+
 	if err != nil {
 		fmt.Println("Error creating stire:", err)
 		os.Exit(1)

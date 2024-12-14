@@ -17,12 +17,11 @@ type Store struct {
 	llm gollm.LLM
 }
 
-func NewStore() (*Store, error) {
-	// Create a new LLM instance with Ollama provider
+func NewStore(provider string, model string, timeout time.Duration) (*Store, error) {
 	llm, err := gollm.NewLLM(
-		gollm.SetProvider("ollama"),
-		gollm.SetModel("mistral-small:latest"),
-		gollm.SetTimeout(1*time.Hour),
+		gollm.SetProvider(provider),
+		gollm.SetModel(model),
+		gollm.SetTimeout(timeout),
 		gollm.SetLogLevel(utils.LogLevelOff),
 	)
 	if err != nil {

@@ -47,13 +47,11 @@ func InitialModel(store *store.Store) tea.Model {
 		huh.NewGroup(
 			huh.NewInput().
 				Title("Enter files mask").
-				Description("sdlsakd;;alsd; sa;ldk ;kas;dl ").
 				Prompt("?").
 				Value(app.pattern).
 				Validate(fileglob.ValidPattern),
 			huh.NewText().
 				Title("Promnt").
-				Description("sdlsakd;;alsd; sa;ldk ;kas;dl ").
 				Value(app.promt).
 				Validate(func(s string) error {
 					return nil
