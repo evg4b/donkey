@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/goreleaser/fileglob"
@@ -46,10 +45,6 @@ func (s *Store) Generate(promt string, pattern string) {
 	}
 }
 
-var template = `Process input file using the following instructions: "%s",
-Return only proccessed text. Do not include a preamble.
-Input file: %s`
-
 func (s *Store) process(file string, prompt string) error {
 	data, err := os.ReadFile(file)
 	if err != nil {
@@ -57,8 +52,18 @@ func (s *Store) process(file string, prompt string) error {
 	}
 
 	promptObject := gollm.NewPrompt(
-		fmt.Sprintf(template, strings.ReplaceAll(prompt, "\"", "\\\""), string(data)),
-		gollm.WithOutput("Return only the text. Do not include a preamble."),
+		fmt.Sprintf(`%s. Input file: %s`, prompt, string(data)),
+		gollm.WithContext(
+			"You are applcation wich process input file using the instructions."+
+				"Your output will be used as content file.",
+		),
+		gollm.WithDirectives(
+			"Do not add or remove content unless specifically stated in the instructions.",
+			"Follow the instructions strictly",
+			"Don't remove empty lines",
+			"Avoid wrapping the result in ```",
+		),
+		gollm.WithOutput("Return only the text. Do not include a preamble. Do not wrap yout in markdown tags"),
 	)
 
 	ctx := context.Background()
