@@ -10,16 +10,6 @@ import (
 	"github.com/goreleaser/fileglob"
 )
 
-var Meter = spinner.Spinner{
-	Frames: []string{
-		"▱▱▱",
-		"▰▱▱",
-		"▱▰▱",
-		"▱▱▰",
-	},
-	FPS: time.Second / 7, //nolint:gomnd
-}
-
 type donkeyApp struct {
 	store *store.Store
 
@@ -34,36 +24,41 @@ type donkeyApp struct {
 func InitialModel(store *store.Store) tea.Model {
 	var promt, pattern string = "", ""
 
-	app := donkeyApp{
+	donkey := donkeyApp{
 		store:   store,
 		promt:   &promt,
 		pattern: &pattern,
 		spinner: spinner.New(
-			spinner.WithSpinner(Meter),
+			spinner.WithSpinner(spinner.Spinner{
+				Frames: []string{
+					"▱▱▱",
+					"▰▱▱",
+					"▱▰▱",
+					"▱▱▰",
+				},
+				FPS: time.Second / 7,
+			}),
 		),
 	}
 
-	app.form = huh.NewForm(
+	donkey.form = huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
 				Title("Enter files mask").
-				Prompt("?").
-				Value(app.pattern).
+				Prompt("").
+				Value(donkey.pattern).
 				Validate(fileglob.ValidPattern),
 			huh.NewText().
 				Title("Promnt").
-				Value(app.promt).
-				Validate(func(s string) error {
-					return nil
-				}),
+				Value(donkey.promt),
 		),
 	).
 		WithWidth(80).
-		WithShowHelp(false).
+		WithShowHelp(true).
 		WithShowErrors(true).
 		WithTheme(huh.ThemeCatppuccin())
 
-	return app
+	return donkey
 }
 
 func (m donkeyApp) Init() tea.Cmd {
@@ -75,21 +70,23 @@ func (m donkeyApp) Init() tea.Cmd {
 
 func (m donkeyApp) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
+	var cmd tea.Cmd
 
-	switch msg.(type) {
+	switch event := msg.(type) {
 	case finishLoading:
 		return m, tea.Batch(
 			tea.SetWindowTitle("🫏 donkey"),
 			tea.Quit,
 		)
-
 	case spinner.TickMsg:
-		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
+	case tea.KeyMsg:
+		if event.String() == "q" || event.String() == "ctrl+c" {
+			return m, tea.Quit
+		}
 	}
 
-	// Process the form
 	form, cmd := m.form.Update(msg)
 	if f, ok := form.(*huh.Form); ok {
 		m.form = f
