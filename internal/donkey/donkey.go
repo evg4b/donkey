@@ -21,9 +21,11 @@ type donkeyApp struct {
 	promt   *string
 }
 
-func InitialModel(store *store.Store) tea.Model {
-	var promt, pattern string = "", ""
-
+func InitialModel(
+	store *store.Store,
+	pattern string,
+	promt string,
+) tea.Model {
 	donkey := donkeyApp{
 		store:   store,
 		promt:   &promt,
