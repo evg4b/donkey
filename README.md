@@ -8,6 +8,9 @@
     <a href="https://github.com/evg4b/donkey/blob/main/LICENSE">
         <img alt="License" src="https://img.shields.io/github/license/evg4b/donkey?label=license&branch=main" />
     </a>
+    <a href="https://github.com/evg4b/donkey/blob/main/LICENSE">
+        <img alt="GitHub Release" src="https://img.shields.io/github/v/release/evg4b/donkey" />
+    </a>
 </h1>
 <p align="center">
     A small utility for batch file rpecessing using AI.
