@@ -19,6 +19,6 @@
 ## Get started
 
 - Install [Ollama](https://ollama.com/)
-- Donwload model for processing `ollama pull mistral-small` (you can change model in `~/.donkey.toml`)
+- Download model for processing `ollama pull mistral-small` (you can change model in `~/.donkey.toml`)
 - Install `donkey` using `go install github.com/evg4b/donkey`
 - Use it.

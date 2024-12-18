@@ -33,27 +33,27 @@ func main() {
 	flag.StringVar(&pattern, "pattern", pattern, "Pattern for the files")
 	flag.StringVar(&promt, "promt", promt, "Promt for the model")
 
-	flag.Parse()
+flag.Parse()
 
-	if version {
-		fmt.Println("🫏 version:", Version)
-		os.Exit(0)
-	}
+if version {
+	fmt.Println("🫏 version:", Version)
+os.Exit(0)
+}
 
-	store, err := store.NewStore(
-		config.DefaultProvider,
-		config.DefaultModel,
-		config.Timeout,
-	)
+store, err := store.NewStore(
+	config.DefaultProvider,
+	config.DefaultModel,
+config.Timeout,
+)
 
-	if err != nil {
-		fmt.Println("Error creating stire:", err)
-		os.Exit(1)
-	}
+if err != nil {
+	fmt.Println("Error creating stire:", err)
+os.Exit(1)
+}
 
-	model := donkey.InitialModel(store, pattern, promt)
-	if _, err := tea.NewProgram(model).Run(); err != nil {
-		fmt.Println("Error running program:", err)
-		os.Exit(1)
-	}
+model := donkey.InitialModel(store, pattern, promt)
+if _, err := tea.NewProgram(model).Run(); err != nil {
+	fmt.Println("Error running program:", err)
+os.Exit(1)
+}
 }

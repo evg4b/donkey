@@ -1,7 +1,7 @@
 package donkey
 
 import (
-	"time"
+	"fmt"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
@@ -19,6 +19,15 @@ type donkeyApp struct {
 	form    *huh.Form
 	pattern *string
 	promt   *string
+
+	task string
+}
+
+// A command that waits for the activity on a channel.
+func waitForActivity(sub <-chan store.Event) tea.Cmd {
+	return func() tea.Msg {
+		return <-sub
+	}
 }
 
 func InitialModel(
@@ -31,15 +40,7 @@ func InitialModel(
 		promt:   &promt,
 		pattern: &pattern,
 		spinner: spinner.New(
-			spinner.WithSpinner(spinner.Spinner{
-				Frames: []string{
-					"▱▱▱",
-					"▰▱▱",
-					"▱▰▱",
-					"▱▱▰",
-				},
-				FPS: time.Second / 7,
-			}),
+			spinner.WithSpinner(spinner.Dot),
 		),
 	}
 
@@ -83,6 +84,17 @@ func (m donkeyApp) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case spinner.TickMsg:
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
+	case store.Event:
+		switch event.Type {
+		case store.FileProcessing:
+			m.task = event.FileName
+		case store.FileProcessed:
+			cmds = append(cmds, tea.Printf("📄 Processed %s", event.FileName))
+		case store.MemoryCleared:
+			cmds = append(cmds, tea.Printf("🧠 Memory cleared"))
+		}
+		cmds = append(cmds, waitForActivity(m.store.Events()))
+		return m, tea.Batch(cmds...)
 	case tea.KeyMsg:
 		if event.String() == "q" || event.String() == "ctrl+c" {
 			return m, tea.Quit
@@ -104,6 +116,7 @@ func (m donkeyApp) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.store.Generate(*m.promt, *m.pattern)
 				return finishLoading{}
 			},
+			waitForActivity(m.store.Events()),
 		)
 	}
 
@@ -112,7 +125,15 @@ func (m donkeyApp) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m donkeyApp) View() string {
 	if m.loading {
-		return m.spinner.View() + " 🫏 the donkey does his job..."
+		if m.task == "" {
+			return m.spinner.View() + " 🫏 does his job..."
+		}
+
+		return fmt.Sprintf(
+			"%s 🫏 processing %s file...",
+			m.spinner.View(),
+			m.task,
+		)
 	}
 
 	return m.form.View()
