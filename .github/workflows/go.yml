@@ -27,3 +27,10 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.ACCOUNT_GITHUB_TOKEN }}
+
+      - name: Build and publish NPM packages
+        uses: evg4b/goreleaser-npm-publisher-action@v1.0.0
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          prefix: '@evg4b'
+          description: 'A simple dev HTTP/HTTPS reverse proxy for replacing CORS headers.'
