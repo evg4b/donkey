@@ -9,6 +9,11 @@ const (
 )
 
 type Event struct {
-	Type     EventType
-	FileName string
+	Type           EventType
+	InputFileName  string
+	OutputFileName string
+}
+
+func (s *Event) HasDifferentOutput() bool {
+	return s.InputFileName != s.OutputFileName
 }

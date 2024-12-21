@@ -19,6 +19,7 @@ type donkeyApp struct {
 	form    *huh.Form
 	pattern *string
 	promt   *string
+	suffix  *string
 
 	task string
 }
@@ -30,15 +31,12 @@ func waitForActivity(sub <-chan store.Event) tea.Cmd {
 	}
 }
 
-func InitialModel(
-	store *store.Store,
-	pattern string,
-	promt string,
-) tea.Model {
+func InitialModel(store *store.Store, pattern, promt, suffix string) tea.Model {
 	donkey := donkeyApp{
 		store:   store,
 		promt:   &promt,
 		pattern: &pattern,
+		suffix:  &suffix,
 		spinner: spinner.New(
 			spinner.WithSpinner(spinner.Dot),
 		),
@@ -48,12 +46,19 @@ func InitialModel(
 		huh.NewGroup(
 			huh.NewInput().
 				Title("Enter files mask").
+				Description("Use glob pattern to specify files").
 				Prompt("").
 				Value(donkey.pattern).
 				Validate(fileglob.ValidPattern),
 			huh.NewText().
 				Title("Promnt").
+				Description("Promt for the model").
 				Value(donkey.promt),
+			huh.NewInput().
+				Title("Suffix").
+				Description("Suffix for the output files").
+				Prompt("").
+				Value(donkey.suffix),
 		),
 	).
 		WithWidth(80).
@@ -87,9 +92,13 @@ func (m donkeyApp) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case store.Event:
 		switch event.Type {
 		case store.FileProcessing:
-			m.task = event.FileName
+			m.task = event.InputFileName
 		case store.FileProcessed:
-			cmds = append(cmds, tea.Printf("📄 Processed %s", event.FileName))
+			if event.HasDifferentOutput() {
+				cmds = append(cmds, tea.Printf("📄 Processed %s -> %s", event.InputFileName, event.OutputFileName))
+			} else {
+				cmds = append(cmds, tea.Printf("📄 Processed %s", event.InputFileName))
+			}
 		case store.MemoryCleared:
 			cmds = append(cmds, tea.Printf("🧠 Memory cleared"))
 		}
@@ -113,7 +122,7 @@ func (m donkeyApp) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds,
 			m.spinner.Tick,
 			func() tea.Msg {
-				m.store.Generate(*m.promt, *m.pattern)
+				m.store.Generate(*m.promt, *m.pattern, *m.suffix)
 				return finishLoading{}
 			},
 			waitForActivity(m.store.Events()),

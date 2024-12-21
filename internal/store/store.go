@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/goreleaser/fileglob"
@@ -17,7 +19,7 @@ type Store struct {
 	eventChan chan Event
 }
 
-func NewStore(provider string, model string, timeout time.Duration) (*Store, error) {
+func NewStore(provider, model string, timeout time.Duration) (*Store, error) {
 	llm, err := gollm.NewLLM(
 		gollm.SetProvider(provider),
 		gollm.SetModel(model),
@@ -33,7 +35,7 @@ func NewStore(provider string, model string, timeout time.Duration) (*Store, err
 	}, nil
 }
 
-func (s *Store) Generate(promt string, pattern string) {
+func (s *Store) Generate(promt, pattern, suffix string) {
 	files, err := fileglob.Glob(pattern)
 	if err != nil {
 		panic(err)
@@ -44,9 +46,10 @@ func (s *Store) Generate(promt string, pattern string) {
 	}
 
 	for _, file := range files {
-		s.eventChan <- Event{Type: FileProcessing, FileName: file}
-		s.process(file, promt)
-		s.eventChan <- Event{Type: FileProcessed, FileName: file}
+		s.eventChan <- Event{Type: FileProcessing, InputFileName: file}
+		outFile := createOutputFileName(file, suffix)
+		s.process(file, promt, outFile)
+		s.eventChan <- Event{Type: FileProcessed, InputFileName: file, OutputFileName: outFile}
 	}
 	close(s.eventChan)
 }
@@ -55,7 +58,20 @@ func (s *Store) Events() <-chan Event {
 	return s.eventChan
 }
 
-func (s *Store) process(file string, prompt string) error {
+func createOutputFileName(file, suffix string) string {
+	if suffix == "" {
+		return file
+	}
+	ext := filepath.Ext(file)
+	return fmt.Sprintf(
+		"%s.%s.%s",
+		strings.TrimSuffix(file, ext),
+		strings.Trim(suffix, "."),
+		strings.Trim(ext, "."),
+	)
+}
+
+func (s *Store) process(inputFile, prompt, outFile string) error {
 	defer func() {
 		if memoryLLM, ok := s.llm.(interface{ ClearMemory() }); ok {
 			memoryLLM.ClearMemory()
@@ -64,7 +80,7 @@ func (s *Store) process(file string, prompt string) error {
 		}
 	}()
 
-	data, err := os.ReadFile(file)
+	data, err := os.ReadFile(inputFile)
 	if err != nil {
 		return err
 	}
@@ -93,7 +109,7 @@ Input file: %s`, prompt, string(data)),
 		log.Fatalf("Failed to generate response: %v", err)
 	}
 
-	err = os.WriteFile(file, []byte(response), 0664)
+	err = os.WriteFile(outFile, []byte(response), 0664)
 	if err != nil {
 		return err
 	}
