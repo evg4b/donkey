@@ -34,6 +34,9 @@ jobs:
           token: ${{ secrets.NPM_TOKEN }}
           prefix: '@evg4b'
           description: 🫏 A small utility for batch file rpecessing using AI
+          files: |-
+            LICENSE
+            README.md
           keywords: |-
             processing
             cli
